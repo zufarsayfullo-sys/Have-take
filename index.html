@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigate Unit 4: Have or Take?</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #3498db; --success: #2ecc71; --error: #e74c3c; --warning: #f1c40f; }
+        body { 
+            font-family: 'Poppins', sans-serif; margin: 0; min-height: 100vh; display: flex; justify-content: center; align-items: center;
+            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), 
+                        url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1920&q=80');
+            background-size: cover; background-position: center; color: white;
+        }
+        .quiz-container { 
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px);
+            padding: 40px; border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            width: 90%; max-width: 650px; text-align: center; border: 1px solid rgba(255,255,255,0.2);
+        }
+        .sentence-area { font-size: 1.4rem; margin-bottom: 35px; line-height: 1.6; min-height: 80px; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .option-btn {
+            background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255,255,255,0.3);
+            color: white; padding: 20px; border-radius: 15px; cursor: pointer; font-size: 1.5rem;
+            text-transform: uppercase; font-weight: 600; transition: 0.2s;
+        }
+        .option-btn:hover:not(:disabled) { background: var(--primary); border-color: white; }
+        .option-btn.correct { background: var(--success) !important; border-color: white; }
+        .option-btn.wrong { background: var(--error) !important; border-color: white; }
+        
+        #progress-container { width: 100%; height: 12px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 30px; display: flex; overflow: hidden; }
+        .progress-segment { height: 100%; flex-grow: 1; border-right: 1px solid rgba(0,0,0,0.2); }
+        .seg-correct { background: var(--success) !important; }
+        .seg-wrong { background: var(--error) !important; }
+        
+        #next-btn { 
+            margin-top: 30px; padding: 18px 40px; background: var(--warning); color: #000; 
+            border: none; border-radius: 50px; font-weight: 800; cursor: pointer; 
+            width: 100%; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
+        }
+        #next-btn:hover { background: #fff; transform: scale(1.02); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="start-screen">
+        <h2>Collocations: Have or Take?</h2>
+        <p>Unit 4 Mastery (100 Questions)</p>
+        <input type="text" id="student-name" placeholder="Enter Your Full Name" style="padding:15px; width:100%; border-radius:10px; border:none; margin-bottom:20px; text-align:center; font-size:1.1rem; box-sizing:border-box; outline: none;">
+        <button id="start-btn" onclick="startQuiz()" style="padding: 15px 40px; background:var(--primary); color:white; border:none; border-radius:50px; font-weight:bold; cursor:pointer; width:100%;">Start Quiz</button>
+    </div>
+
+    <div id="main-quiz" class="hidden">
+        <div id="progress-container">
+            <div class="progress-segment"></div><div class="progress-segment"></div><div class="progress-segment"></div><div class="progress-segment"></div><div class="progress-segment"></div>
+            <div class="progress-segment"></div><div class="progress-segment"></div><div class="progress-segment"></div><div class="progress-segment"></div><div class="progress-segment"></div>
+        </div>
+        <div class="sentence-area" id="sentence-display"></div>
+        <div class="options-grid">
+            <button class="option-btn" onclick="checkAnswer(this, 'have')">Have</button>
+            <button class="option-btn" onclick="checkAnswer(this, 'take')">Take</button>
+        </div>
+        <button id="next-btn" class="hidden" onclick="nextQuestion()">Next Question ⮕</button>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h2 id="result-name"></h2>
+        <div id="score-display" style="font-size: 5rem; color: var(--warning); font-weight: bold;"></div>
+        <button id="restart-btn" onclick="location.reload()" style="padding: 15px 40px; background:var(--primary); color:white; border:none; border-radius:50px; font-weight:bold; cursor:pointer; width:100%;">Try Another 10</button>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzjaoBxGbsuMNHNvenbb_3wAw1XKuGLHSFoSHbvT3NL0zAkFbWSppPQVyYLxjTxCJFp/exec";
+    
+    const fullBank = [
+        { s: "Can I _______ a word with you about the new project?", ans: "have" },
+        { s: "You should _______ my word for it; the ballet is wonderful!", ans: "take" },
+        { s: "We usually _______ turns to wash the dishes in the office kitchen.", ans: "take" },
+        { s: "I don't want to _______ it for granted that my parents will help.", ans: "take" },
+        { s: "I _______ a feeling that the working conditions will improve soon.", ans: "have" },
+        { s: "Managers often have to _______ difficult decisions about staff.", ans: "take" },
+        { s: "It's important to _______ responsibility for your own mistakes.", ans: "have" },
+        { s: "Don't _______ risks with company money unless you are sure.", ans: "take" },
+        { s: "I _______ difficulty in understanding the new software.", ans: "have" },
+        { s: "We should _______ advantage of the training sessions offered.", ans: "take" },
+        { s: "Did you _______ a good time at the corporate event?", ans: "have" },
+        { s: "I need to _______ a break after working for four hours.", ans: "take" },
+        { s: "It is good to _______ a go at something new every year.", ans: "have" },
+        { s: "Please _______ a seat and the manager will see you shortly.", ans: "take" },
+        { s: "I _______ a look at your CV and it's very impressive.", ans: "have" },
+        { s: "She needs to _______ care of the paperwork before she leaves.", ans: "take" },
+        { s: "I _______ no idea that he was planning to resign.", ans: "have" },
+        { s: "It can _______ a long time to get a promotion in this firm.", ans: "take" },
+        { s: "We _______ a meeting scheduled for tomorrow at ten.", ans: "have" },
+        { s: "Don't _______ it personally if your idea is rejected.", ans: "take" },
+        { s: "If you _______ a problem with the schedule, tell the manager.", ans: "have" },
+        { s: "I need to _______ some time off to visit my family.", ans: "take" },
+        { s: "Did you _______ a chance to read the report yet?", ans: "have" },
+        { s: "You should _______ a deep breath and try to relax.", ans: "take" },
+        { s: "I _______ a chat with Sarah and she agrees with us.", ans: "have" },
+        { s: "It's important to _______ pride in the work you do.", ans: "take" },
+        { s: "We _______ a lot in common with our business partners.", ans: "have" },
+        { s: "I _______ a shower before I come to the office.", ans: "have" },
+        { s: "Can you _______ a photo of the team for the website?", ans: "take" },
+        { s: "I _______ a dream about winning the lottery last night.", ans: "have" },
+        { s: "Please _______ a look at the attached file.", ans: "have" },
+        { s: "He doesn't _______ the courage to tell his boss the truth.", ans: "have" },
+        { s: "I _______ a lot of respect for our new CEO.", ans: "have" },
+        { s: "It doesn't _______ much effort to be polite to colleagues.", ans: "take" },
+        { s: "We _______ an argument about the budget yesterday.", ans: "have" },
+        { s: "You need to _______ an exam to get the qualification.", ans: "take" },
+        { s: "I _______ a suspicion that they are hiding something.", ans: "have" },
+        { s: "Don't _______ any notice of what the critics say.", ans: "take" },
+        { s: "I _______ an appointment with the doctor at 3 p.m.", ans: "have" },
+        { s: "I'll _______ a taxi to the airport instead of the bus.", ans: "take" },
+        { s: "Do you _______ any experience in marketing?", ans: "have" },
+        { s: "It will _______ place in the main conference room.", ans: "take" },
+        { s: "I _______ a strong preference for working from home.", ans: "have" },
+        { s: "We should _______ an interest in our local community.", ans: "have" },
+        { s: "I _______ a drink while I was waiting for the train.", ans: "have" },
+        { s: "It's your turn to _______ the lead on this project.", ans: "take" },
+        { s: "I _______ a lot of sympathy for people who lost their jobs.", ans: "have" },
+        { s: "Let's _______ a walk during our lunch hour.", ans: "take" },
+        { s: "I _______ a doubt about whether this is the right move.", ans: "have" },
+        { s: "You need to _______ an interest in your own career growth.", ans: "take" },
+        { s: "I _______ a quick nap after I finished the report.", ans: "have" },
+        { s: "The meeting will _______ at least two hours.", ans: "take" },
+        { s: "I _______ an influence on his decision to join the team.", ans: "have" },
+        { s: "Please _______ your time; there is no rush.", ans: "take" },
+        { s: "I _______ a memory of visiting this office years ago.", ans: "have" },
+        { s: "He was asked to _______ a speech at the conference.", ans: "take" },
+        { s: "I _______ a feeling that today will be a good day.", ans: "have" },
+        { s: "You should _______ the opportunity to learn a new language.", ans: "take" },
+        { s: "I _______ a conversation with the client this morning.", ans: "have" },
+        { s: "The boss told us to _______ it easy this weekend.", ans: "take" },
+        { s: "I _______ a plan to improve our sales figures.", ans: "have" },
+        { s: "You should _______ part in the office sports day.", ans: "take" },
+        { s: "I _______ a reason for being late to the meeting.", ans: "have" },
+        { s: "Don't _______ the blame for something you didn't do.", ans: "take" },
+        { s: "I _______ a breakfast meeting tomorrow at 8 a.m.", ans: "have" },
+        { s: "The train _______ 40 minutes to reach the city center.", ans: "take" },
+        { s: "I _______ an impact on the final design of the product.", ans: "have" },
+        { s: "Please _______ notes during the presentation.", ans: "take" },
+        { s: "I _______ a cold so I might stay at home tomorrow.", ans: "have" },
+        { s: "We need to _______ action to solve this problem quickly.", ans: "take" },
+        { s: "I _______ a feeling that the weather will be nice.", ans: "have" },
+        { s: "I'll _______ the bus instead of driving today.", ans: "take" },
+        { s: "I _______ an idea for a new marketing campaign.", ans: "have" },
+        { s: "You should _______ advice from a professional.", ans: "take" },
+        { s: "I _______ a lunch break at 1 p.m. every day.", ans: "have" },
+        { s: "It will _______ a lot of hard work to finish this.", ans: "take" },
+        { s: "I _______ a preference for tea over coffee.", ans: "have" },
+        { s: "Please _______ a look at this chart.", ans: "have" },
+        { s: "The company will _______ a loss this year.", ans: "have" },
+        { s: "We should _______ a rest before we continue.", ans: "take" },
+        { s: "I _______ a headache from staring at the screen.", ans: "have" },
+        { s: "You must _______ a test before you can drive.", ans: "take" },
+        { s: "I _______ an obligation to help my team.", ans: "have" },
+        { s: "It's time to _______ a stand against unfair rules.", ans: "take" },
+        { s: "I _______ a meeting with the director today.", ans: "have" },
+        { s: "I'll _______ the responsibility for the mistake.", ans: "take" },
+        { s: "I _______ a suggestion for the party theme.", ans: "have" },
+        { s: "We need to _______ the temperature of the room.", ans: "take" },
+        { s: "I _______ a lot of fun at the weekend.", ans: "have" },
+        { s: "Can you _______ a message for me?", ans: "take" },
+        { s: "I _______ a talk with my parents about my career.", ans: "have" },
+        { s: "It's hard to _______ a choice between the two roles.", ans: "take" },
+        { s: "I _______ a wish to travel around the world.", ans: "have" },
+        { s: "Please _______ the elevator to the fifth floor.", ans: "take" },
+        { s: "I _______ a doubt that he will arrive on time.", ans: "have" },
+        { s: "You should _______ advantage of the free gym.", ans: "take" },
+        { s: "I _______ a sense of achievement after the project.", ans: "have" },
+        { s: "It might _______ some time to get used to the new system.", ans: "take" },
+        { s: "I _______ a word with the manager yesterday.", ans: "have" },
+        { s: "Please _______ a deep breath and stay calm.", ans: "take" }
+    ];
+
+    let currentQ = 0, score = 0, quizData = [], studentName = "", mistakes = [];
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(isCorrect) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        
+        if (isCorrect) {
+            // Happy Chime
+            osc.frequency.setValueAtTime(523, audioCtx.currentTime); // C5
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        } else {
+            // Dissonant Buzz
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+            osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.2); // A2
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+
+    function startQuiz() {
+        studentName = document.getElementById('student-name').value.trim();
+        if (!studentName) return alert("Please enter your name to start.");
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('main-quiz').classList.remove('hidden');
+        quizData = fullBank.sort(() => 0.5 - Math.random()).slice(0, 10);
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = quizData[currentQ];
+        document.getElementById('sentence-display').innerText = q.s;
+        document.getElementById('next-btn').classList.add('hidden');
+        document.querySelectorAll('.option-btn').forEach(b => {
+            b.disabled = false;
+            b.classList.remove('correct', 'wrong');
+        });
+    }
+
+    function checkAnswer(btn, choice) {
+        const correct = quizData[currentQ].ans;
+        const buttons = document.querySelectorAll('.option-btn');
+        const segments = document.querySelectorAll('.progress-segment');
+        buttons.forEach(b => b.disabled = true);
+
+        if (choice === correct) {
+            score++;
+            btn.classList.add('correct');
+            segments[currentQ].classList.add('seg-correct');
+            playSound(true);
+        } else {
+            btn.classList.add('wrong');
+            buttons.forEach(b => { if(b.innerText.toLowerCase() === correct) b.classList.add('correct'); });
+            segments[currentQ].classList.add('seg-wrong');
+            mistakes.push(`Q${currentQ+1}: ${correct} (User: ${choice})`);
+            playSound(false);
+        }
+        document.getElementById('next-btn').classList.remove('hidden');
+    }
+
+    function nextQuestion() {
+        currentQ++;
+        if (currentQ < 10) loadQuestion(); else finishQuiz();
+    }
+
+    function finishQuiz() {
+        const percent = (score / 10) * 100;
+        const payload = { name: studentName, score: score + " / 10", percentage: percent + "%", mistakes: mistakes.join(" // ") };
+        fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
+        
+        document.getElementById('main-quiz').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        document.getElementById('result-name').innerText = "Results for " + studentName;
+        document.getElementById('score-display').innerText = percent + "%";
+    }
+</script>
+</body>
+</html>
